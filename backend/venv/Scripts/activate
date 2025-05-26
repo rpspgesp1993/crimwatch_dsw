@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Rafael\Desktop\crimwatch _dsm4\backend\venv"
+VIRTUAL_ENV="D:\crimwatch_dsm4_estrutura_django\backend\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
