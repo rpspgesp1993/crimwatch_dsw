@@ -252,14 +252,6 @@ export default function Home() {
                   {oc.bairro}, {oc.municipio}<br />
                   {new Date(oc.data).toLocaleDateString()}<br />
                   {oc.descricao}<br /><br />
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    onClick={() => deletarOcorrencia(oc._id)}
-                  >
-                    Remover
-                  </Button>
                 </Popup>
               </Marker>
             ))}
