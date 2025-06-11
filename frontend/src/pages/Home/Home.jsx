@@ -1,140 +1,121 @@
-// Importa bibliotecas React e hooks necessários
 import React, { useEffect, useRef, useState } from 'react';
-
-// Importa Leaflet (biblioteca de mapas)
 import L from 'leaflet';
-
-// Importa componentes da biblioteca MUI (Material UI) para estilização e UI
 import {
   Box,
-  AppBar,
-  Toolbar,
-  Typography,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   FormControlLabel,
   Switch,
   Button,
-  Menu,
-  MenuItem
+  Typography,
+  AppBar,
+  Toolbar,
+  IconButton
 } from '@mui/material';
-
-// Ícone de seta para expandir o Accordion
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-// Importa componentes do React Leaflet (wrapper para Leaflet no React)
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
-
-// Importa estilos do Leaflet e do geocoder
+import { useAuth } from '../../contexts/AuthContext'; // Ajuste o caminho conforme sua estrutura
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
-
-// Importa controle de geocodificação do Leaflet
 import 'leaflet-control-geocoder';
-
-// Importa estilos personalizados da página
 import './Home.css';
-
-// Importa componente de barra de busca
 import SearchBar from '../../components/SearchBar';
 
-// Importa NavLink do react-router-dom para navegação
-import { NavLink } from 'react-router-dom';
-
-// Importa logo (supondo que esteja na pasta assets)
-import logo from '../../assets/logoCrimWatch.png';
-
-
-// Componente GeocoderControl: adiciona barra de busca por endereço ao mapa
+// Componente GeocoderControl
 const GeocoderControl = () => {
-  // Obtém a instância do mapa usando o hook useMap do react-leaflet
   const map = useMap();
-
-  // Efeito para adicionar o controle de geocodificação ao mapa
   useEffect(() => {
-    // Cria uma instância do geocoder do Leaflet e adiciona ao mapa
     const geocoder = L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
-
-    // Função de limpeza: remove o controle quando o componente é desmontado
     return () => map.removeControl(geocoder);
-  }, [map]); // Dependência: só executa quando o mapa muda
-
-  return null; // Componente não renderiza nada, apenas adiciona funcionalidade ao mapa
+  }, [map]);
+  return null;
 };
 
-
-// Componente principal da página Home
 export default function Home() {
-  // Ref para acessar a instância do mapa diretamente
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Ref para acessar a instância do mapa
   const mapRef = useRef(null);
 
-  // Estados para controlar a exibição de municípios e seus dados
+  // Estados
   const [showMunicipios, setShowMunicipios] = useState(false);
   const [municipiosData, setMunicipiosData] = useState(null);
-  
-  // Estados para controlar a exibição de bairros e seus dados
   const [showBairros, setShowBairros] = useState(false);
   const [bairrosData, setBairrosData] = useState(null);
-
-  // Estado para armazenar a lista de ocorrências
   const [ocorrencias, setOcorrencias] = useState([]);
+  const [filtros, setFiltros] = useState({
+    roubos: true,
+    furtos: true,
+    estupro: true,
+    policialMorto: true
+  });
 
-  // Estado para armazenar o usuário logado (pega do localStorage)
-  const [usuario, setUsuario] = useState(localStorage.getItem('user') || null);
+  // Funções
+  const handleFiltroChange = (tipo) => {
+    setFiltros(prev => ({
+      ...prev,
+      [tipo]: !prev[tipo]
+    }));
+  };
 
-  // Estados para controlar o menu de login (Material UI)
-  const [anchorEl, setAnchorEl] = useState(null);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
-  // Funções para abrir/fechar o menu de login
-  const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
+  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
+    const tipo = ocorrencia.tipo.toLowerCase();
+    if (tipo.includes('roubo') && filtros.roubos) return true;
+    if (tipo.includes('furto') && filtros.furtos) return true;
+    if (tipo.includes('estupro') && filtros.estupro) return true;
+    if (tipo.includes('policial') && tipo.includes('morto') && filtros.policialMorto) return true;
+    return false;
+  });
 
-  // Efeito para carregar os dados geográficos (municípios e bairros) ao montar o componente
+  // Efeitos
   useEffect(() => {
-    // Carrega dados de municípios
     fetch('/municipiosBS.geojson')
       .then(r => r.json())
       .then(setMunicipiosData)
       .catch(err => console.error('Erro municípios', err));
 
-    // Carrega dados de bairros
     fetch('/BAIRROS_BS.geojson')
       .then(r => r.json())
       .then(setBairrosData)
       .catch(err => console.error('Erro bairros', err));
-  }, []); // Array de dependências vazio = executa apenas uma vez
+  }, []);
 
-  // Efeito para buscar ocorrências do backend
   useEffect(() => {
-    fetch('http://localhost:4000/api/ocorrencias')
+    const token = localStorage.getItem('token');
+
+    fetch('http://localhost:4000/api/ocorrencias', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(r => r.json())
       .then(setOcorrencias)
       .catch(err => console.error('Erro ocorrências:', err));
-  }, []); // Busca ocorrências apenas uma vez ao montar
+  }, []);
 
-  // Efeito para escutar mudanças no localStorage (login/logout em outra aba)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setUsuario(localStorage.getItem('user'));
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []); // Configura o listener apenas uma vez
-
-  // Função para deletar uma ocorrência
   const deletarOcorrencia = async (id) => {
-    // Confirmação antes de deletar
     if (!window.confirm('Tem certeza que deseja remover esta ocorrência?')) return;
-    
+
     try {
-      // Faz requisição DELETE para a API
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:4000/api/ocorrencias/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       const data = await res.json();
       alert(data.mensagem || 'Removida com sucesso');
-      // Atualiza a lista de ocorrências removendo a deletada
       setOcorrencias(prev => prev.filter(o => o._id !== id));
     } catch (err) {
       console.error('Erro ao deletar:', err);
@@ -142,60 +123,13 @@ export default function Home() {
     }
   };
 
-  // Renderização do componente
   return (
-    <Box>
-      {/* Barra superior de navegação */}
-      <AppBar position="static">
-        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* Logo e título */}
-            <img src={logo} alt="CrimWatch" style={{ height: '40px', marginRight: '16px' }} />
-          </Box>
-
-          {/* Links de navegação e botão de login */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <NavLink to="/nova" style={{ color: 'white', textDecoration: 'none' }}>
-              Registrar Ocorrências
-            </NavLink>
-            <NavLink to="/ranking" style={{ color: 'white', textDecoration: 'none' }}>
-              Ranking de Crimes
-            </NavLink>
-            <div>
-              <Button onClick={handleMenuClick} style={{ color: 'white' }}>
-                {usuario || 'Entrar'}
-              </Button>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                {!usuario && (
-                  <MenuItem onClick={() => {
-                    handleClose();
-                    window.location.href = '/login';
-                  }}>
-                    Login
-                  </MenuItem>
-                )}
-                {usuario && (
-                  <MenuItem onClick={() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    setUsuario(null);
-                    handleClose();
-                    window.location.href = '/login';
-                  }}>
-                    Sair
-                  </MenuItem>
-                )}
-              </Menu>
-            </div>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+  
       {/* Container principal */}
       <Box className="container" sx={{ height: 'calc(100vh - 64px)', display: 'flex' }}>
         {/* Painel lateral */}
         <Box className="form-container" sx={{ width: '300px', overflowY: 'auto', p: 2 }}>
-          {/* Accordion para controles de limites geográficos */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Limites Geográficos</Typography>
@@ -212,45 +146,82 @@ export default function Home() {
             </AccordionDetails>
           </Accordion>
 
-          {/* Accordion para filtros de tipos de ocorrências */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Tipos de Ocorrências</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <FormControlLabel control={<Switch />} label="Roubos" />
-              <FormControlLabel control={<Switch />} label="Furtos" />
-              <FormControlLabel control={<Switch />} label="Estupro" />
-              <FormControlLabel control={<Switch />} label="Policial morto em serviço" />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filtros.roubos}
+                    onChange={() => handleFiltroChange('roubos')}
+                  />
+                }
+                label="Roubos"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filtros.furtos}
+                    onChange={() => handleFiltroChange('furtos')}
+                  />
+                }
+                label="Furtos"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filtros.estupro}
+                    onChange={() => handleFiltroChange('estupro')}
+                  />
+                }
+                label="Estupro"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filtros.policialMorto}
+                    onChange={() => handleFiltroChange('policialMorto')}
+                  />
+                }
+                label="Policial morto em serviço"
+              />
             </AccordionDetails>
           </Accordion>
+
+          <Box className="stats-container">
+            <Typography variant="body2" className="stats-title">
+              Estatísticas
+            </Typography>
+            <Typography variant="body2" className="stats-item">
+              Total de ocorrências: {ocorrencias.length}
+            </Typography>
+            <Typography variant="body2" className="stats-item">
+              Ocorrências exibidas: {ocorrenciasFiltradas.length}
+            </Typography>
+          </Box>
         </Box>
 
         {/* Container do Mapa */}
         <Box className="map-container" sx={{ flexGrow: 1, height: '100%' }}>
-          {/* Componente de barra de busca */}
           <SearchBar
             onSelect={(lat, lon) => mapRef.current && mapRef.current.setView([lat, lon], 15)}
           />
 
-          {/* Container do mapa Leaflet */}
           <MapContainer
-            center={[-23.9608, -46.3336]} // Coordenadas iniciais (Santos, SP)
-            zoom={11} // Zoom inicial
-            scrollWheelZoom // Habilita zoom com roda do mouse
+            center={[-23.9608, -46.3336]}
+            zoom={11}
+            scrollWheelZoom
             style={{ height: '100%', width: '100%' }}
-            whenCreated={map => (mapRef.current = map)} // Callback quando o mapa é criado
+            whenCreated={map => (mapRef.current = map)}
           >
-            {/* Camada base do mapa (OpenStreetMap) */}
             <TileLayer
               attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-
-            {/* Componente de geocodificação (busca por endereço) */}
             <GeocoderControl />
 
-            {/* Renderiza municípios se ativado e dados carregados */}
             {showMunicipios && municipiosData && (
               <GeoJSON
                 data={municipiosData}
@@ -261,7 +232,6 @@ export default function Home() {
               />
             )}
 
-            {/* Renderiza bairros se ativado e dados carregados */}
             {showBairros && bairrosData && (
               <GeoJSON
                 data={bairrosData}
@@ -272,35 +242,29 @@ export default function Home() {
               />
             )}
 
-            {/* Renderiza marcadores para cada ocorrência */}
-            {ocorrencias.map(oc => (
+            {ocorrenciasFiltradas.map(oc => (
               <Marker
                 key={oc._id}
                 position={[oc.coordenadas.lat, oc.coordenadas.lon]}
               >
-                {/* Popup com informações da ocorrência */}
                 <Popup>
                   <strong>{oc.tipo}</strong><br />
                   {oc.bairro}, {oc.municipio}<br />
                   {new Date(oc.data).toLocaleDateString()}<br />
                   {oc.descricao}<br /><br />
-                  {/* Botão para deletar ocorrência */}
-                  <button
-                    style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4, border: 'none', backgroundColor: '#d32f2f', color: 'white' }}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
                     onClick={() => deletarOcorrencia(oc._id)}
                   >
-                    Excluir
-                  </button>
+                    Remover
+                  </Button>
                 </Popup>
               </Marker>
             ))}
           </MapContainer>
         </Box>
-      </Box>
-
-      {/* Rodapé */}
-      <Box component="footer" sx={{ p: 2, textAlign: 'center', backgroundColor: '#f5f5f5' }}>
-        <Typography variant="body2">© 2025 CrimWatch</Typography>
       </Box>
     </Box>
   );

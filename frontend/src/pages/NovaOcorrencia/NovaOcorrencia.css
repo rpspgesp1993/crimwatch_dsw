@@ -1,0 +1,417 @@
+/* NovaOcorrencia.css */
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Container principal - CORRIGIDO PARA PERMITIR ROLAGEM */
+.nova-ocorrencia-container {
+  min-height: 100vh;
+  height: auto; /* Permite altura automática */
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  padding-bottom: 40px; /* Espaço extra no final */
+  overflow-x: hidden; /* Apenas impede rolagem horizontal */
+  overflow-y: auto; /* Permite rolagem vertical */
+}
+
+/* Garantir que body e html permitam rolagem */
+html, body {
+  height: auto !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* Header fixo */
+.nova-ocorrencia-header {
+  background-color: '#0b78d1';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #0b78d1 0%, #0964b8 100%);
+  box-shadow: 0 4px 20px rgba(11, 120, 209, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.nova-ocorrencia-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nova-ocorrencia-header-brand img {
+  height: 40px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.nova-ocorrencia-header-title {
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  margin: 0;
+}
+
+.nova-ocorrencia-header-title span {
+  color: #d9434f;
+}
+
+.nova-ocorrencia-nav {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nova-ocorrencia-nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nova-ocorrencia-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Card principal do formulário */
+.nova-ocorrencia-card {
+  max-width: 1000px;
+  margin: 2rem auto;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  padding: 40px;
+  animation: fadeIn 0.6s ease-out;
+  position: relative; /* Para garantir posicionamento correto */
+}
+
+.nova-ocorrencia-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 32px;
+  text-align: center;
+  position: relative;
+}
+
+.nova-ocorrencia-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #0b78d1, #d9434f);
+  border-radius: 2px;
+}
+
+/* Grid do formulário */
+.nova-ocorrencia-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* Campos do formulário */
+.nova-ocorrencia-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.nova-ocorrencia-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nova-ocorrencia-input,
+.nova-ocorrencia-select,
+.nova-ocorrencia-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #f9fafb;
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.nova-ocorrencia-input:focus,
+.nova-ocorrencia-select:focus,
+.nova-ocorrencia-textarea:focus {
+  background-color: #ffffff;
+  border-color: #0b78d1;
+  box-shadow: 0 0 0 3px rgba(11, 120, 209, 0.1);
+}
+
+.nova-ocorrencia-input:read-only {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.nova-ocorrencia-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Seção do mapa */
+.nova-ocorrencia-map-section {
+  margin-bottom: 32px;
+}
+
+.nova-ocorrencia-map-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.nova-ocorrencia-map-container {
+  height: 350px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  position: relative; /* Para garantir posicionamento correto */
+}
+
+.nova-ocorrencia-map-container:hover {
+  border-color: #0b78d1;
+}
+
+/* Botão de envio */
+.nova-ocorrencia-submit-button {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #0b78d1, #0964b8);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(11, 120, 209, 0.3);
+}
+
+.nova-ocorrencia-submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(11, 120, 209, 0.4);
+}
+
+.nova-ocorrencia-submit-button:disabled {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+.nova-ocorrencia-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Seção de coordenadas */
+.nova-ocorrencia-coordinates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.nova-ocorrencia-coordinates::before {
+  content: '📍';
+  position: absolute;
+  margin-left: -8px;
+  margin-top: -8px;
+  font-size: 20px;
+}
+
+/* Indicadores visuais */
+.nova-ocorrencia-required {
+  color: #d9434f;
+  font-weight: bold;
+}
+
+.nova-ocorrencia-field-icon {
+  color: #6b7280;
+  font-size: 18px;
+}
+
+/* Mensagens de erro/sucesso do toast */
+.Toastify__toast-container {
+  font-family: inherit;
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .nova-ocorrencia-header {
+    padding: 0.5rem 1rem;
+    flex-direction: column;
+    gap: 12px;
+    height: auto;
+  }
+  
+  .nova-ocorrencia-nav {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .nova-ocorrencia-container {
+    padding-top: 120px;
+    padding-bottom: 60px; /* Mais espaço no mobile */
+  }
+  
+  .nova-ocorrencia-card {
+    margin: 1rem;
+    padding: 24px;
+  }
+  
+  .nova-ocorrencia-form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .nova-ocorrencia-coordinates {
+    grid-template-columns: 1fr;
+  }
+  
+  .nova-ocorrencia-map-container {
+    height: 250px;
+  }
+  
+  .nova-ocorrencia-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nova-ocorrencia-header-title {
+    font-size: 1.2rem;
+  }
+  
+  .nova-ocorrencia-nav a {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .nova-ocorrencia-card {
+    padding: 20px;
+  }
+  
+  .nova-ocorrencia-input,
+  .nova-ocorrencia-select,
+  .nova-ocorrencia-textarea {
+    font-size: 16px; /* Evita zoom no iOS */
+  }
+  
+  .nova-ocorrencia-container {
+    padding-bottom: 80px; /* Ainda mais espaço em telas muito pequenas */
+  }
+}
+
+/* ADIÇÕES PARA GARANTIR ROLAGEM SUAVE */
+
+/* Rolagem suave para toda a página */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Garantir que não há elementos com altura fixa que impeçam a rolagem */
+* {
+  box-sizing: border-box;
+}
+
+/* Para casos onde há problemas com viewport em dispositivos móveis */
+@media screen and (max-width: 768px) {
+  .nova-ocorrencia-container {
+    min-height: calc(100vh - 80px);
+    height: auto;
+  }
+}
+
+/* Estilo para indicador de rolagem (opcional) */
+.scroll-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(11, 120, 209, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  z-index: 999;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(11, 120, 209, 0.3);
+}
+
+.scroll-indicator:hover {
+  background: rgba(11, 120, 209, 1);
+  transform: translateY(-2px);
+}

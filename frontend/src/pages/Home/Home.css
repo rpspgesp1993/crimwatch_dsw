@@ -1,128 +1,770 @@
 :root {
-  --primary-color: #f9f9f9;
+  --primary-color: #d9434f;
+  --primary-hover: #c73940;
+  --background-gradient-start: #f9fafb;
+  --background-gradient-end: #f3f4f6;
+  --card-background: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border-color: #d1d5db;
+  --border-light: #e5e7eb;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --focus-shadow: rgba(217, 67, 79, 0.1);
+  --sidebar-width: 320px;
+  --navbar-height: 70px;
 }
 
+/* Reset e configurações globais */
 body, html, #root {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: 'Roboto', sans-serif;
-  background-color: var(--primary-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
 }
 
+/* AppBar customizada */
 .MuiAppBar-root {
   z-index: 1200;
+  background: var(--card-background) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
 }
 
+.MuiToolbar-root {
+  padding: 0 32px !important;
+  min-height: var(--navbar-height) !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo container */
+.MuiToolbar-root .logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Logo styling */
+.MuiToolbar-root img {
+  height: 40px !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.MuiToolbar-root img:hover {
+  transform: scale(1.05);
+}
+
+/* Navigation container */
+.MuiToolbar-root .nav-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+/* Navigation links */
+.MuiToolbar-root a {
+  color: var(--text-primary) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  padding: 10px 20px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.MuiToolbar-root a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  transition: width 0.3s ease;
+  border-radius: 1px;
+}
+
+.MuiToolbar-root a:hover {
+  background-color: rgba(217, 67, 79, 0.05) !important;
+  color: var(--primary-color) !important;
+  transform: translateY(-1px) !important;
+}
+
+.MuiToolbar-root a:hover::before {
+  width: 70%;
+}
+
+.MuiToolbar-root a.active {
+  background-color: rgba(217, 67, 79, 0.1) !important;
+  color: var(--primary-color) !important;
+  font-weight: 600 !important;
+}
+
+.MuiToolbar-root a.active::before {
+  width: 70%;
+}
+
+/* Actions container */
+.MuiToolbar-root .actions-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Menu button */
+.MuiButton-root {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 5px 15px !important;
+  border-radius: 30px !important;
+  transition: all 0.3s ease !important;
+  background-color: transparent !important;
+  border: 1px solid var(--border-light) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.MuiButton-root:hover {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border-color: var(--primary-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(217, 67, 79, 0.3) !important;
+}
+
+.login-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+.MuiButton-root:hover .login-icon {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Notification badge */
+.notification-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  border: 2px solid var(--card-background);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Search icon button */
+.search-icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: transparent;
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+}
+
+.search-icon-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 67, 79, 0.3);
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-left: 16px;
+}
+
+.breadcrumb-separator {
+  color: var(--border-color);
+  font-size: 10px;
+}
+
+/* Container principal */
 .container {
   display: flex;
   width: 100vw;
   max-width: 100vw;
-  height: calc(100vh - 64px - 50px);
+  height: calc(100vh - var(--navbar-height) - 60px);
   overflow: hidden;
 }
 
+/* Sidebar/Form container */
 .form-container {
-  width: 300px;
-  background-color: var(--primary-color);
-  border-right: 1px solid #ddd;
+  width: var(--sidebar-width);
+  background-color: var(--card-background);
+  border-right: 1px solid var(--border-light);
   overflow-y: auto;
-  padding: 1rem;
+  padding: 24px;
   box-sizing: border-box;
+  box-shadow: 4px 0 20px var(--shadow-light);
+  position: relative;
 }
 
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+}
+
+/* Accordion styling */
+.MuiAccordion-root {
+  background-color: var(--card-background) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  margin-bottom: 16px !important;
+  box-shadow: 0 2px 8px var(--shadow-light) !important;
+  transition: all 0.2s ease !important;
+}
+
+.MuiAccordion-root:hover {
+  box-shadow: 0 4px 12px var(--shadow-medium) !important;
+  transform: translateY(-1px) !important;
+}
+
+.MuiAccordion-root:before {
+  display: none !important;
+}
+
+.MuiAccordionSummary-root {
+  padding: 16px 20px !important;
+  background-color: var(--card-background) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.MuiAccordionSummary-root:hover {
+  background-color: #fafafa !important;
+}
+
+.MuiAccordionSummary-content {
+  margin: 0 !important;
+}
+
+.MuiAccordionSummary-content .MuiTypography-root {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+}
+
+.MuiAccordionDetails-root {
+  padding: 20px !important;
+  border-top: 1px solid var(--border-light) !important;
+  background-color: #fafafa !important;
+}
+
+/* Form controls */
 .MuiFormControlLabel-root {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  display: flex !important;
+  justify-content: space-between !important;
+  margin: 8px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  background-color: var(--card-background) !important;
+  border: 1px solid transparent !important;
 }
 
+.MuiFormControlLabel-root:hover {
+  background-color: #f8f9fa !important;
+  border-color: var(--border-color) !important;
+}
+
+.MuiFormControlLabel-label {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+/* Switch styling */
+.MuiSwitch-root .MuiSwitch-switchBase.Mui-checked {
+  color: var(--primary-color) !important;
+}
+
+.MuiSwitch-root .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: var(--primary-color) !important;
+}
+
+.MuiSwitch-track {
+  background-color: var(--border-color) !important;
+}
+
+/* Map container */
 .map-container {
   flex-grow: 1;
   height: 100%;
-  background-color: #e0e0e0;
-  position: relative; /* necessário para .search-bar ficar absoluta */
+  background-color: #f8f9fa;
+  position: relative;
+  border-radius: 0 0 0 20px;
+  overflow: hidden;
 }
 
-footer {
-  height: 50px;
-  background-color: #1976d2;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.form-container::-webkit-scrollbar {
-  width: 6px;
-}
-.form-container::-webkit-scrollbar-thumb {
-  background-color: #bbb;
-  border-radius: 4px;
-}
-.form-container::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
-}
-
-.leaflet-control.geocoder-control {
-  position: absolute !important;
-  top: 10px;
-  left: 45px;
-  z-index: 1000;
-}
-
-.leaflet-control-geocoder-icon {
-  background-color: white;
-  border-radius: 4px;
-  padding: 4px;
-  border: 1px solid #ccc;
-}
-
-/* Barra de busca */
+/* Search bar */
 .search-bar {
   position: absolute;
-  top: 12px;
-  left: 50px; /* após a sidebar */
+  top: 20px;
+  left: 20px;
   z-index: 1201;
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  width: 500px;
+  background: var(--card-background);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px var(--shadow-medium);
+  width: 400px;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
 }
 
 .search-bar input {
   width: 100%;
-  padding: 8px;
-  font-size: 1rem;
+  padding: 12px 16px;
+  font-size: 14px;
   box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: #f9fafb;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.search-bar input:focus {
+  background-color: var(--card-background);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
+}
+
+.search-bar input::placeholder {
+  color: var(--text-muted);
 }
 
 .search-bar ul {
-  margin: 8px 0 0 0;
+  margin: 12px 0 0 0;
   padding: 0;
   list-style: none;
-  max-height: 150px;
+  max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background-color: var(--card-background);
 }
 
 .search-bar li {
-  padding: 6px 8px;
-  border-bottom: 1px solid #eee;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.search-bar li:last-child {
+  border-bottom: none;
 }
 
 .search-bar li:hover {
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+  padding-left: 20px;
+}
+
+/* Leaflet controls */
+.leaflet-control.geocoder-control {
+  position: absolute !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 1000 !important;
+}
+
+.leaflet-control-geocoder-icon {
+  background-color: var(--card-background) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  border: 1px solid var(--border-light) !important;
+  box-shadow: 0 2px 8px var(--shadow-light) !important;
+}
+
+/* Cores diferentes por tipo */
+.popup-roubo .leaflet-popup-content-wrapper {
+  background-color: #e74c3c !important;
+}
+
+.popup-furto .leaflet-popup-content-wrapper {
+  background-color: #f39c12 !important;
+}
+
+.popup-estupro .leaflet-popup-content-wrapper {
+  background-color: #8e44ad !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #ffffff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  border: none;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-width: 280px;
+  max-width: 340px;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  line-height: 1.5;
+  color: #4b5563;
+  font-size: 14px;
+  padding: 10px 20px 0px 20px;
+}
+
+.leaflet-popup-content strong {
+  color: #d9434f;
+  font-size: 20px;
+  font-weight: 700;
+  display: block;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.leaflet-popup-content strong::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, #d9434f, rgba(217, 67, 79, 0.3));
+}
+
+.leaflet-popup-content .info-row {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.leaflet-popup-content .info-label {
+  font-weight: 600;
+  color: #374151;
+  width: 100px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaflet-popup-content .info-label svg {
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
+}
+
+.leaflet-popup-content .info-value {
+  flex-grow: 1;
+  color: #4b5563;
+  word-break: break-word;
+}
+
+.leaflet-popup-content .info-value.highlight {
+  color: #d9434f;
+  font-weight: 600;
+}
+
+.leaflet-popup-content-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #d9434f, #c73940);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.leaflet-popup-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  border: none;
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+  padding: 0;
+}
+
+.leaflet-popup-close-button:hover {
+  background-color: #d9434f;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.leaflet-popup-tip {
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Classes adicionais para organização do conteúdo */
+.leaflet-popup-content .section {
+  margin-bottom: 16px;
+}
+
+.leaflet-popup-content .section-title {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.leaflet-popup-content .tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.leaflet-popup-content .tag {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.leaflet-popup-content .tag.alert {
+  background-color: #fee2e2;
+  color: #d9434f;
+}
+
+/* Popup buttons */
+.leaflet-popup-content button {
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.leaflet-popup-content button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* Estatísticas Container */
+.stats-container {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px var(--shadow-light);
+  transition: all 0.2s ease;
+}
+
+.stats-container:hover {
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  transform: translateY(-1px);
+}
+
+.stats-title {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  margin-bottom: 12px !important;
+  font-size: 15px !important;
+  display: flex;
+  align-items: center;
+}
+
+.stats-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(180deg, var(--primary-color), var(--primary-hover));
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+.stats-item {
+  color: var(--text-secondary) !important;
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+  padding-left: 12px;
+  position: relative;
+}
+
+.stats-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.stats-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Footer */
+footer, .MuiBox-root[component="footer"] {
+  height: 60px !important;
+  background: linear-gradient(135deg, var(--text-primary) 0%, #374151 100%) !important;
+  color: white !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 -2px 10px var(--shadow-light) !important;
+}
+
+footer .MuiTypography-root {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+/* Scrollbar customization */
+.form-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.form-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-color), var(--primary-hover));
+  border-radius: 6px;
+}
+
+.form-container::-webkit-scrollbar-track {
+  background-color: var(--border-light);
+  border-radius: 6px;
+}
+
+.search-bar ul::-webkit-scrollbar {
+  width: 4px;
+}
+
+.search-bar ul::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+.search-bar ul::-webkit-scrollbar-track {
+  background-color: #f8f9fa;
+}
+
+/* Menu dropdown */
+.MuiMenu-paper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px var(--shadow-medium) !important;
+  border: 1px solid var(--border-light) !important;
+  margin-top: 8px !important;
+}
+
+.MuiMenuItem-root {
+  padding: 12px 20px !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.MuiMenuItem-root:hover {
+  background-color: #f8f9fa !important;
+  color: var(--primary-color) !important;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .MuiToolbar-root .nav-container {
+    gap: 4px;
+  }
+  
+  .MuiToolbar-root a {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+  }
 }
 
 @media (max-width: 768px) {
+  :root {
+    --sidebar-width: 100%;
+    --navbar-height: 60px;
+  }
+
   .container {
     flex-direction: column;
   }
@@ -130,17 +772,80 @@ footer {
   .form-container {
     width: 100%;
     height: auto;
+    max-height: 40vh;
     border-right: none;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-light);
+    border-radius: 0;
   }
 
   .map-container {
-    height: calc(100vh - 128px);
+    height: calc(60vh - var(--navbar-height));
+    border-radius: 0;
   }
 
   .search-bar {
-    left: 20px;
-    top: 100px;
-    width: calc(100% - 40px);
+    left: 16px;
+    right: 16px;
+    width: auto;
+    top: 16px;
+  }
+
+  .MuiToolbar-root {
+    padding: 0 16px !important;
+    min-height: var(--navbar-height) !important;
+  }
+
+  .MuiToolbar-root .nav-container {
+    display: none;
+  }
+
+  .MuiToolbar-root .actions-container {
+    gap: 8px;
+  }
+
+  .MuiToolbar-root a {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  .MuiButton-root {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    padding: 12px;
+  }
+
+  .search-bar input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .form-container {
+    padding: 16px;
+  }
+
+  .MuiAccordionSummary-content .MuiTypography-root {
+    font-size: 14px !important;
+  }
+
+  .MuiFormControlLabel-label {
+    font-size: 13px !important;
+  }
+
+  .MuiToolbar-root {
+    padding: 0 12px !important;
+  }
+
+  .MuiToolbar-root img {
+    height: 32px !important;
+  }
+
+  .login-icon {
+    width: 18px;
+    height: 18px;
   }
 }
