@@ -16,7 +16,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import { useAuth } from '../../contexts/AuthContext'; // Ajuste o caminho conforme sua estrutura
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -35,6 +35,29 @@ const GeocoderControl = () => {
   return null;
 };
 
+// Componente para controlar o zoom e alternar entre Marker e CircleMarker
+const ZoomController = ({ setZoomLevel }) => {
+  const map = useMapEvents({
+    zoomend: () => {
+      setZoomLevel(map.getZoom());
+    }
+  });
+  return null;
+};
+
+// Ícone customizado vermelho para os markers
+const redIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#dc2626" stroke="#991b1b" stroke-width="1" d="M12.5,0 C19.4,0 25,5.6 25,12.5 C25,19.4 12.5,41 12.5,41 C12.5,41 0,19.4 0,12.5 C0,5.6 5.6,0 12.5,0 Z"/>
+      <circle fill="#ffffff" cx="12.5" cy="12.5" r="4"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
 export default function Home() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
@@ -48,12 +71,16 @@ export default function Home() {
   const [showBairros, setShowBairros] = useState(false);
   const [bairrosData, setBairrosData] = useState(null);
   const [ocorrencias, setOcorrencias] = useState([]);
+  const [zoomLevel, setZoomLevel] = useState(11);
   const [filtros, setFiltros] = useState({
     roubos: true,
     furtos: true,
     estupro: true,
     policialMorto: true
   });
+
+  // Nível de zoom limite para alternar entre marker e circle
+  const ZOOM_THRESHOLD = 14;
 
   // Funções
   const handleFiltroChange = (tipo) => {
@@ -120,6 +147,65 @@ export default function Home() {
     } catch (err) {
       console.error('Erro ao deletar:', err);
       alert('Erro ao deletar ocorrência');
+    }
+  };
+
+  // Função para calcular o raio do círculo baseado no zoom
+  const getCircleRadius = (zoom) => {
+    // Raio cresce exponencialmente com o zoom
+    // Zoom 14: raio 12
+    // Zoom 15: raio 18
+    // Zoom 16: raio 25
+    // Zoom 17+: raio 35
+    const baseRadius = 8;
+    const zoomFactor = Math.max(1, zoom - ZOOM_THRESHOLD + 1);
+    return Math.min(35, baseRadius + (zoomFactor * 6));
+  };
+
+  // Função para renderizar ocorrência baseada no zoom
+  const renderOcorrencia = (oc) => {
+    const popupContent = (
+      <div>
+        <strong>{oc.tipo}</strong><br />
+        {oc.bairro}, {oc.municipio}<br />
+        {new Date(oc.data).toLocaleDateString()}<br />
+        {oc.descricao}<br /><br />
+      </div>
+    );
+
+    if (zoomLevel >= ZOOM_THRESHOLD) {
+      // Zoom alto: mostra círculo vermelho que cresce com o zoom
+      const circleRadius = getCircleRadius(zoomLevel);
+      return (
+        <CircleMarker
+          key={oc._id}
+          center={[oc.coordenadas.lat, oc.coordenadas.lon]}
+          radius={circleRadius}
+          pathOptions={{
+            color: '#dc2626',
+            fillColor: '#dc2626',
+            fillOpacity: 0.6,
+            weight: 2
+          }}
+        >
+          <Popup>
+            {popupContent}
+          </Popup>
+        </CircleMarker>
+      );
+    } else {
+      // Zoom baixo: mostra marker vermelho
+      return (
+        <Marker
+          key={oc._id}
+          position={[oc.coordenadas.lat, oc.coordenadas.lon]}
+          icon={redIcon}
+        >
+          <Popup>
+            {popupContent}
+          </Popup>
+        </Marker>
+      );
     }
   };
 
@@ -221,6 +307,7 @@ export default function Home() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <GeocoderControl />
+            <ZoomController setZoomLevel={setZoomLevel} />
 
             {showMunicipios && municipiosData && (
               <GeoJSON
@@ -242,19 +329,7 @@ export default function Home() {
               />
             )}
 
-            {ocorrenciasFiltradas.map(oc => (
-              <Marker
-                key={oc._id}
-                position={[oc.coordenadas.lat, oc.coordenadas.lon]}
-              >
-                <Popup>
-                  <strong>{oc.tipo}</strong><br />
-                  {oc.bairro}, {oc.municipio}<br />
-                  {new Date(oc.data).toLocaleDateString()}<br />
-                  {oc.descricao}<br /><br />
-                </Popup>
-              </Marker>
-            ))}
+            {ocorrenciasFiltradas.map(oc => renderOcorrencia(oc))}
           </MapContainer>
         </Box>
       </Box>
