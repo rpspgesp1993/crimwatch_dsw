@@ -42,4 +42,20 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Verificar Token
+router.get('/verify', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token não fornecido' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET || 'segredo123', (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ isValid: false, message: 'Token inválido ou expirado' });
+    }
+    res.json({ isValid: true, user: decoded });
+  });
+});
+
 module.exports = router;

@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-console.log("API base URL:", process.env.REACT_APP_API_URL);
+console.log("✅ API base URL:", process.env.REACT_APP_API_URL);
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',  // ✅ Com o /api
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

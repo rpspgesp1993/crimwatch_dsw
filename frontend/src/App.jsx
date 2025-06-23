@@ -11,32 +11,22 @@ import PainelAdmin from './pages/PainelAdmin';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './contexts/ProtectedRoute';
 
-// Componente interno que usa o contexto de autenticação
 function AppRoutes() {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <p>Verificando autenticação...</p>
-      </div>
-    );
-  }
-  
+  const { token } = useAuth(); // ✅ substitui isAuthenticated()
 
   return (
     <Routes>
-      {/* Public routes (no layout) */}
+      {/* Rotas públicas */}
       <Route
         path="/login"
-        element={!isAuthenticated() ? <LoginPage /> : <Navigate to="/home" />}
+        element={!token ? <LoginPage /> : <Navigate to="/home" />}
       />
       <Route
         path="/register"
-        element={!isAuthenticated() ? <RegisterPage /> : <Navigate to="/home" />}
+        element={!token ? <RegisterPage /> : <Navigate to="/home" />}
       />
 
-      {/* Protected routes (with layout) */}
+      {/* Rotas protegidas (com layout) */}
       <Route
         path="/"
         element={
@@ -45,44 +35,20 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route
-          index
-          element={<Navigate to="/home" />}
-        />
-        <Route
-          path="home"
-          element={<Home />}
-        />
-        <Route
-          path="nova-ocorrencia"
-          element={<NovaOcorrencia />}
-        />
-        <Route
-          path="ranking"
-          element={<Ranking />}
-        />
-        <Route
-          path="painel-admin"
-          element={<PainelAdmin />}
-        />
-
-        {/* Redirects */}
-        <Route
-          path="*"
-          element={<Navigate to="/home" />}
-        />
+        <Route index element={<Navigate to="/home" />} />
+        <Route path="home" element={<Home />} />
+        <Route path="nova-ocorrencia" element={<NovaOcorrencia />} />
+        <Route path="ranking" element={<Ranking />} />
+        <Route path="painel-admin" element={<PainelAdmin />} />
+        <Route path="*" element={<Navigate to="/home" />} />
       </Route>
 
-      {/* Catch all redirect for unauthenticated users */}
-      <Route
-        path="*"
-        element={<Navigate to="/login" />}
-      />
+      {/* Fallback: qualquer rota inválida vai pro login */}
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
 
-// Componente principal exportado
 export default function App() {
   return (
     <AuthProvider>

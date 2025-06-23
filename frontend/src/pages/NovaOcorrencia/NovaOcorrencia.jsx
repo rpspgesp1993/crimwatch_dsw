@@ -99,7 +99,7 @@ export default function NovaOcorrencia() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/ocorrencias', {
+      const response = await api.post('/api/ocorrencias', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

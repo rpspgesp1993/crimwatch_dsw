@@ -4,34 +4,16 @@ import { useAuth } from './AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { token } = useAuth();
 
-  // Mostrar loading enquanto verifica autenticação
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Enquanto verifica o token, você pode opcionalmente mostrar loading:
+  // (só adicione isso se implementar 'loading' no AuthContext futuramente)
 
-  // Se não estiver autenticado, redirecionar para login
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isAuthenticated()) {
+  if (!token) {
     console.log("Usuário NÃO autenticado. Redirecionando para /login");
     return <Navigate to="/login" replace />;
   }
-  
 
-  // Se estiver autenticado, renderizar o componente
   return children;
 };
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';  // ✅ Corrigido: usando o axiosInstance
 
 const AuthContext = createContext();
 
@@ -14,23 +14,24 @@ export const AuthProvider = ({ children }) => {
     if (tokenSalvo && usuarioSalvo) {
       setToken(tokenSalvo);
       setUsuario(JSON.parse(usuarioSalvo));
-      axios.defaults.headers.common['Authorization'] = tokenSalvo;
+      api.defaults.headers.common['Authorization'] = `Bearer ${tokenSalvo}`;
     }
   }, []);
 
   const login = async (email, senha) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, senha });
+      const res = await api.post('/auth/login', { email, senha });  // ✅ Corrigido
       const { token, usuario } = res.data;
 
       setUsuario(usuario);
       setToken(token);
       localStorage.setItem('token', token);
       localStorage.setItem('usuario', JSON.stringify(usuario));
-      axios.defaults.headers.common['Authorization'] = token;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       return { sucesso: true };
     } catch (err) {
+      console.error('Erro no login:', err);
       return { sucesso: false, erro: err.response?.data?.error || 'Erro ao logar' };
     }
   };
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
-    delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
   };
 
   return (
