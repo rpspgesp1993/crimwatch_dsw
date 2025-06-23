@@ -1,7 +1,9 @@
+// RegisterPage.jsx
 import React, { useState } from 'react';
-import { Eye, EyeOff, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosInstance';
+import AlertSnackbar from '../../components/AlertSnackbar';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
@@ -10,30 +12,21 @@ const RegisterPage = () => {
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
-    setSuccess('');
 
     try {
       await api.post('/auth/register', { nome, email, senha });
-      
-      setSuccess('Cadastro realizado com sucesso! Redirecionando para login...');
-      
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-      
+      setSnackbar({ open: true, message: 'Cadastro realizado com sucesso! Redirecionando para login...', severity: 'success' });
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Erro ao cadastrar usuário. Por favor, tente novamente.');
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Erro ao cadastrar usuário.', severity: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +34,13 @@ const RegisterPage = () => {
 
   return (
     <div className="register-container">
+      <AlertSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      />
       <div className="register-card-container">
-        {/* Logo/Header Section */}
         <div className="register-header">
           <div className="register-logo">
             <Shield size={32} color="#d9434f" />
@@ -55,26 +53,8 @@ const RegisterPage = () => {
           </p>
         </div>
 
-        {/* Register Form */}
         <div className="register-form-card">
           <div className="register-form">
-            {/* Error Message */}
-            {error && (
-              <div className="register-error">
-                <AlertCircle size={20} style={{ flexShrink: 0 }} />
-                <p>{error}</p>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-              <div className="register-success">
-                <CheckCircle size={20} style={{ flexShrink: 0 }} />
-                <p>{success}</p>
-              </div>
-            )}
-
-            {/* Name Field */}
             <div className="register-field">
               <label htmlFor="nome" className="register-label">
                 Nome Completo
@@ -90,7 +70,6 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Email Field */}
             <div className="register-field">
               <label htmlFor="email" className="register-label">
                 Email
@@ -106,7 +85,6 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Password Field */}
             <div className="register-field">
               <label htmlFor="password" className="register-label">
                 Senha
@@ -131,7 +109,6 @@ const RegisterPage = () => {
               </div>
             </div>
 
-            {/* Register Button */}
             <button
               onClick={handleRegister}
               disabled={isLoading}
@@ -151,7 +128,6 @@ const RegisterPage = () => {
             </button>
           </div>
 
-          {/* Footer Links */}
           <div className="register-footer-links">
             <a href="/login" className="register-link">
               Já tem uma conta? Faça login
@@ -162,7 +138,6 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="register-footer">
           <p className="register-copyright">
             © 2024 Crim<span>Watch</span>. Todos os direitos reservados.

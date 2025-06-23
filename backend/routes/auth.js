@@ -5,100 +5,40 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// Registro
+// Registrar novo usuário
 router.post('/register', async (req, res) => {
-  console.log('📝 Tentativa de registro:', req.body);
-
   const { nome, email, senha } = req.body;
 
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ message: 'Nome, email e senha são obrigatórios.' });
-  }
-
   try {
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      console.log('❌ Email já existe:', email);
-      return res.status(400).json({ message: 'Email já cadastrado.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(senha, 10);
-    console.log('🔐 Senha hasheada com sucesso');
-
-    const newUser = new User({
-      nome,
-      email: email.toLowerCase(),
-      senha: hashedPassword
-    });
-
-    await newUser.save();
-    console.log('✅ Usuário registrado:', newUser._id);
-
-    res.status(201).json({ message: 'Usuário cadastrado com sucesso.' });
+    const hash = await bcrypt.hash(senha, 10);
+    const novoUsuario = new User({ nome, email, senha: hash });
+    await novoUsuario.save();
+    res.status(201).json({ message: 'Usuário registrado com sucesso' });
   } catch (err) {
-    console.error('❌ Erro no registro:', err);
-    res.status(500).json({ message: 'Erro no servidor. Tente novamente.' });
+    res.status(400).json({ error: err.message });
   }
 });
 
 // Login
 router.post('/login', async (req, res) => {
-  console.log('🔑 Tentativa de login para:', req.body.email);
-
   const { email, senha } = req.body;
 
-  if (!email || !senha) {
-    console.log('❌ Email ou senha não fornecidos');
-    return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
-  }
-
   try {
-    console.log('🔍 Buscando usuário...');
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const usuario = await User.findOne({ email });
+    if (!usuario) return res.status(400).json({ error: 'Usuário não encontrado' });
 
-    if (!user) {
-      console.log('❌ Usuário não encontrado');
-      return res.status(400).json({ message: 'Credenciais inválidas.' });
-    }
+    const isMatch = await bcrypt.compare(senha, usuario.senha);
+    if (!isMatch) return res.status(401).json({ error: 'Senha inválida' });
 
-    console.log('✅ Usuário encontrado:', user._id);
-    console.log('🔐 Comparando senhas...');
-
-    const isMatch = await bcrypt.compare(senha, user.senha);
-    console.log('🔍 Senha confere:', isMatch);
-
-    if (!isMatch) {
-      console.log('❌ Senha incorreta');
-      return res.status(400).json({ message: 'Credenciais inválidas.' });
-    }
-
-    // Verifica JWT_SECRET
-    if (!process.env.JWT_SECRET) {
-      console.error('❌ JWT_SECRET não definido!');
-      return res.status(500).json({ message: 'Erro de configuração do servidor.' });
-    }
-
-    console.log('🎟️ Gerando token...');
     const token = jwt.sign(
-      { userId: user._id, nome: user.nome, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+      { id: usuario._id, nome: usuario.nome, role: usuario.role },
+      process.env.JWT_SECRET || 'segredo123',
+      { expiresIn: '1h' }
     );
 
-    console.log('✅ Login realizado com sucesso!');
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        nome: user.nome,
-        email: user.email
-      }
-    });
-
+    res.json({ token, usuario: { id: usuario._id, nome: usuario.nome, email: usuario.email, role: usuario.role } });
   } catch (err) {
-    console.error('❌ Erro no login:', err);
-    res.status(500).json({ message: 'Erro no servidor. Tente novamente.' });
+    res.status(500).json({ error: 'Erro interno' });
   }
 });
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 export default function SearchBar({ onSelect }) {
   const [query, setQuery] = useState('');
@@ -14,38 +15,57 @@ export default function SearchBar({ onSelect }) {
     }
 
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${value}&format=json&addressdetails=1&limit=5`);
-      const data = await res.json();
-      setResults(data);
+      const res = await axios.get('https://nominatim.openstreetmap.org/search', {
+        params: {
+          q: value + ', Baixada Santista, São Paulo, Brasil',
+          format: 'json',
+          addressdetails: 1,
+          limit: 5,
+        },
+      });
+
+      setResults(res.data);
     } catch (err) {
       console.error('Erro na busca:', err);
+      setResults([]);
     }
   };
 
+  const handleSelect = (place) => {
+    setQuery(place.display_name);
+    setResults([]);
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+    onSelect(lat, lon);
+  };
+
   return (
-    <div className="search-bar">
+    <div className="search-bar" style={{ position: 'absolute', top: 9, left: 60, zIndex: 1000 }}>
       <input
         type="text"
         value={query}
         onChange={handleSearch}
-        placeholder="Buscar endereço, bairro ou cidade..."
-        style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+        placeholder="Buscar bairro ou cidade..."
+        style={{ width: '370px', padding: '8px' }}
       />
-      <ul style={{ listStyle: 'none', padding: 0, marginTop: 4 }}>
-        {results.map((r) => (
-          <li
-            key={r.place_id}
-            onClick={() => {
-              onSelect(Number(r.lat), Number(r.lon));
-              setQuery('');
-              setResults([]);
-            }}
-            style={{ cursor: 'pointer', padding: '6px', borderBottom: '1px solid #ccc' }}
-          >
-            {r.display_name}
-          </li>
-        ))}
-      </ul>
+      {results.length > 0 && (
+        <ul style={{
+          listStyle: 'none',
+          margin: 0,
+          padding: '20px',
+          backgroundColor: 'white',
+          border: '1px solid #ccc',
+          maxHeight: '150px',
+          overflowY: 'auto',
+          width: '250px'
+        }}>
+          {results.map((r) => (
+            <li key={r.place_id} onClick={() => handleSelect(r)} style={{ cursor: 'pointer', padding: '5px' }}>
+              {r.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
