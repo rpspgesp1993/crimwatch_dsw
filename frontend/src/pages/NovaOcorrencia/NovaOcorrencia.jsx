@@ -1,3 +1,4 @@
+import api from '../../api/axiosInstance';
 import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { useAuth } from '../../contexts/AuthContext'; // Ajuste o caminho conforme sua estrutura
