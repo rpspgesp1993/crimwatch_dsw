@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axiosInstance';
 
@@ -20,6 +19,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, senha) => {
+    console.log('🔎 Corpo da requisição que o frontend está enviando:', { email, senha });
+
     try {
       const res = await api.post('/auth/login', { email, senha });
       const { token, usuario } = res.data;

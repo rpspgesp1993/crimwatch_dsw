@@ -8,14 +8,12 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'user'], default: 'user' }
 });
 
-// Criptografa senha antes de salvar
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('senha')) return next();
   this.senha = await bcrypt.hash(this.senha, 10);
   next();
 });
 
-// Verifica senha
 UserSchema.methods.validarSenha = function (senha) {
   return bcrypt.compare(senha, this.senha);
 };

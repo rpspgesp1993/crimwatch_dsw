@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axiosInstance';  // ✅ Corrigido: usando o axiosInstance
+import api from '../api/axiosInstance';
+
+console.log('🛑 AuthContext carregado - frontend em execução!');
 
 const AuthContext = createContext();
 
@@ -19,8 +21,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, senha) => {
+    console.log('🔎 Enviando para o backend:', { email, senha });  // ✅ Aqui está o console.log que você precisa
+
     try {
-      const res = await api.post('/auth/login', { email, senha });  // ✅ Corrigido
+      const res = await api.post('/auth/login', { email, senha });
       const { token, usuario } = res.data;
 
       setUsuario(usuario);
@@ -36,6 +40,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const cadastrar = async (nome, email, senha) => {
+    try {
+      const res = await api.post('/auth/register', { nome, email, senha });
+      return { sucesso: true, data: res.data };
+    } catch (err) {
+      console.error('Erro no cadastro:', err);
+      return { sucesso: false, erro: err.response?.data?.error || 'Erro ao cadastrar' };
+    }
+  };
+
   const logout = () => {
     setUsuario(null);
     setToken(null);
@@ -45,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, token, login, logout }}>
+    <AuthContext.Provider value={{ usuario, token, login, cadastrar, logout }}>
       {children}
     </AuthContext.Provider>
   );
