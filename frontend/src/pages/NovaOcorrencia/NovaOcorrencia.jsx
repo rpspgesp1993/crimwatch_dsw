@@ -1,7 +1,7 @@
 import api from '../../api/axiosInstance';
 import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import { useAuth } from '../../contexts/AuthContext'; // Ajuste o caminho conforme sua estrutura
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -20,7 +20,6 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './NovaOcorrencia.css';
 
-// Corrige ícone do marcador padrão do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -99,24 +98,10 @@ export default function NovaOcorrencia() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await api.post('/api/ocorrencias', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...form,
-          usuarioId: usuario?.id // Adicionar ID do usuário logado
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.mensagem || 'Erro ao salvar ocorrência');
-      }
-
+    await api.post('/ocorrencias', {
+    ...form,
+    usuarioId: usuario?.id
+});
       toast.success('Ocorrência registrada com sucesso!');
       setForm({
         tipo: '',
@@ -127,7 +112,6 @@ export default function NovaOcorrencia() {
         coordenadas: { lat: '', lon: '' }
       });
 
-      // Redirecionar para home após 2 segundos
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -159,10 +143,8 @@ export default function NovaOcorrencia() {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Container principal */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <div className="nova-ocorrencia-container">
-          {/* Formulário principal */}
           <div className="nova-ocorrencia-card">
             <h2 className="nova-ocorrencia-title">Registrar Nova Ocorrência</h2>
 
@@ -239,7 +221,6 @@ export default function NovaOcorrencia() {
                 </div>
               </div>
 
-              {/* Seção de coordenadas */}
               <div className="nova-ocorrencia-coordinates">
                 <div className="nova-ocorrencia-field">
                   <label htmlFor="lat" className="nova-ocorrencia-label">
@@ -288,7 +269,6 @@ export default function NovaOcorrencia() {
                 />
               </div>
 
-              {/* Seção do mapa */}
               <div className="nova-ocorrencia-map-section">
                 <label className="nova-ocorrencia-map-label">
                   🗺️ Clique no mapa para escolher a localização <span className="nova-ocorrencia-required">*</span>
@@ -320,7 +300,6 @@ export default function NovaOcorrencia() {
                 </div>
               </div>
 
-              {/* Botão de envio */}
               <div className="nova-ocorrencia-submit-section">
                 <Button
                   type="submit"
@@ -349,7 +328,6 @@ export default function NovaOcorrencia() {
         </div>
       </Box>
 
-      {/* Toast Container */}
       <ToastContainer
         position="top-right"
         autoClose={5000}

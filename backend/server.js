@@ -14,5 +14,5 @@ app.use('/api/ocorrencias', ocorrenciasRoutes);
 app.use('/api/auth', authRoutes);
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/crimwatch')
-  .then(() => app.listen(5000, () => console.log('Servidor rodando na porta 5000')))
+  .then(() => app.listen(process.env.PORT || 5000, () => console.log(`Servidor rodando na porta ${process.env.PORT || 5000}`)))
   .catch(err => console.error(err));

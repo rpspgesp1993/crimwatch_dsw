@@ -1,50 +1,25 @@
+// src/api/axiosInstance.js
+
 import axios from 'axios';
 
-console.log("API base URL:", process.env.REACT_APP_API_URL);
-
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',  // ✅ Com o /api
+  baseURL: 'http://localhost:4000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor de requisição
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  console.log('📤 Fazendo requisição:', config.method?.toUpperCase(), config.url);
-  console.log('📦 Base URL:', config.baseURL);
-  console.log('🔗 URL completa:', config.baseURL + config.url);
-
-  return config;
-}, (error) => {
-  console.error('❌ Erro na requisição:', error);
-  return Promise.reject(error);
-});
-
-// Interceptor de resposta
-api.interceptors.response.use(
-  (response) => {
-    console.log('✅ Resposta recebida:', response.status, response.config.url);
-    return response;
+// Interceptor para adicionar o token a cada requisição
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
   (error) => {
-    console.error('❌ Erro na resposta:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-      method: error.config?.method
-    });
-
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-    }
-
     return Promise.reject(error);
   }
 );
