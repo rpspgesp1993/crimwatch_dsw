@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import api from "../../services/api"; // ajuste o caminho conforme seu projeto
+import api from "../../services/api";
+import "./Ranking.css";
 
 // Importações dos dados populacionais por município
 import { populacaoBertioga } from "../../data/bertioga";
@@ -45,6 +46,7 @@ const Ranking = ({ ocorrencias = [] }) => {
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [ocorrenciasAPI, setOcorrenciasAPI] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const tiposDeCrime = useMemo(() => {
     const tipos = new Set();
@@ -55,6 +57,7 @@ const Ranking = ({ ocorrencias = [] }) => {
   }, [ocorrencias]);
 
   const buscarRanking = async () => {
+    setIsLoading(true);
     try {
       const params = {};
       if (municipioSelecionado) params.municipio = municipioSelecionado;
@@ -66,6 +69,8 @@ const Ranking = ({ ocorrencias = [] }) => {
       setOcorrenciasAPI(response.data);
     } catch (err) {
       console.error("Erro ao buscar ranking", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -97,69 +102,111 @@ const Ranking = ({ ocorrencias = [] }) => {
     ? ranking.sort((a, b) => b.taxa - a.taxa)
     : ranking.sort((a, b) => a.bairro.localeCompare(b.bairro));
 
+  // Função para formatar números grandes
+  const formatarNumero = (num) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
   return (
-    <div>
-      <h1>Ranking de Ocorrências por Bairro</h1>
+    <div className="ranking-container">
+      <div className="ranking-card">
+        <div className="ranking-header">
+          <h1 className="ranking-title">Ranking de Ocorrências</h1>
+        </div>
 
-      <div style={{ marginBottom: "1rem" }}>
-        <label>
-          Tipo de Crime:{" "}
-          <select value={tipoSelecionado} onChange={(e) => setTipoSelecionado(e.target.value)}>
-            <option value="todos">Todos</option>
-            {tiposDeCrime.map((tipo) => (
-              <option key={tipo} value={tipo}>
-                {tipo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="ranking-filters">
+          <div className="filter-group">
+            <label className="filter-label">
+              Tipo
+              <select 
+                className="filter-select" 
+                value={tipoSelecionado} 
+                onChange={(e) => setTipoSelecionado(e.target.value)}
+              >
+                <option value="todos">Todos</option>
+                {tiposDeCrime.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label style={{ marginLeft: "2rem" }}>
-          Município:{" "}
-          <select value={municipioSelecionado} onChange={(e) => setMunicipioSelecionado(e.target.value)}>
-            {municipios.map((mun) => (
-              <option key={mun} value={mun}>
-                {mun}
-              </option>
-            ))}
-          </select>
-        </label>
+            <label className="filter-label">
+              Município
+              <select 
+                className="filter-select" 
+                value={municipioSelecionado} 
+                onChange={(e) => setMunicipioSelecionado(e.target.value)}
+              >
+                {municipios.map((mun) => (
+                  <option key={mun} value={mun}>
+                    {mun}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label style={{ marginLeft: "2rem" }}>
-          De:{" "}
-          <input type="date" value={dataInicial} onChange={(e) => setDataInicial(e.target.value)} />
-        </label>
+            <label className="filter-label">
+              Data Inicial
+              <input 
+                type="date" 
+                className="filter-input" 
+                value={dataInicial} 
+                onChange={(e) => setDataInicial(e.target.value)} 
+              />
+            </label>
 
-        <label style={{ marginLeft: "1rem" }}>
-          Até:{" "}
-          <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} />
-        </label>
+            <label className="filter-label">
+              Data Final
+              <input 
+                type="date" 
+                className="filter-input" 
+                value={dataFinal} 
+                onChange={(e) => setDataFinal(e.target.value)} 
+              />
+            </label>
 
-        <button onClick={buscarRanking} style={{ marginLeft: "2rem" }}>
-          Buscar
-        </button>
+            <button 
+              className="search-button" 
+              onClick={buscarRanking}
+              disabled={isLoading}
+            >
+              {isLoading ? "..." : "Buscar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="ranking-table-container">
+          <table className="ranking-table">
+            <thead>
+              <tr>
+                <th>Bairro</th>
+                <th>Ocorrências</th>
+                <th>População</th>
+                <th>Taxa/100k</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rankingOrdenado.map(({ bairro, total, populacao, taxa }, index) => (
+                <tr key={bairro} className={index < 3 ? `ranking-row-${index + 1}` : ''}>
+                  <td className="bairro-cell">{bairro}</td>
+                  <td className="ocorrencias-cell">{total}</td>
+                  <td className="populacao-cell">
+                    {populacao ? formatarNumero(populacao) : "—"}
+                  </td>
+                  <td className="taxa-cell">
+                    {taxa !== null ? taxa.toFixed(1) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Bairro</th>
-            <th>Ocorrências</th>
-            <th>População</th>
-            <th>Taxa (por 100 mil hab.)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rankingOrdenado.map(({ bairro, total, populacao, taxa }) => (
-            <tr key={bairro}>
-              <td>{bairro}</td>
-              <td>{total}</td>
-              <td>{populacao || "Sem dado"}</td>
-              <td>{taxa !== null ? taxa.toFixed(2) : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 };
