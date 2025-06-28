@@ -19,6 +19,9 @@ import L from 'leaflet';
 import { ToastContainer, Bounce, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './NovaOcorrencia.css';
+import { bairrosPorMunicipio } from '../../data/bairrosPorMunicipio.js';
+import { coordenadasPorBairro } from '../../data/coordenadasPorBairro';
+import * as turf from '@turf/turf';
 
 // Fix para os ícones do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -29,42 +32,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const tiposDeCrime = ['Roubos', 'Furtos', 'Policial morto em serviço'];
-const municipios = ['Santos', 'São Vicente', 'Praia Grande', 'Guarujá'];
-
-const bairrosPorMunicipio = {
-  'Santos': ['Centro', 'Gonzaga', 'Boqueirão', 'Aparecida'],
-  'São Vicente': ['Itararé', 'Catiapoã'],
-  'Praia Grande': ['Canto do Forte', 'Boqueirão'],
-  'Guarujá': ['Enseada', 'Astúrias']
-};
-
-const coordenadasPorMunicipio = {
-  'Santos': [-23.9608, -46.3336],
-  'São Vicente': [-23.9631, -46.3919],
-  'Praia Grande': [-24.0058, -46.4028],
-  'Guarujá': [-23.9938, -46.2560]
-};
-
-// Coordenadas corrigidas e mais precisas para cada bairro
-const coordenadasPorBairro = {
-  // Santos - coordenadas mais precisas
-  'Santos-Centro': [-23.9370, -46.3270],
-  'Santos-Gonzaga': [-23.9650, -46.3340],
-  'Santos-Boqueirão': [-23.9710, -46.3400],
-  'Santos-Aparecida': [-23.9440, -46.3290],
-
-  // São Vicente - coordenadas corrigidas
-  'São Vicente-Itararé': [-23.9580, -46.3890],
-  'São Vicente-Catiapoã': [-23.9630, -46.3950],
-
-  // Praia Grande - coordenadas mais específicas
-  'Praia Grande-Canto do Forte': [-24.0080, -46.4050],
-  'Praia Grande-Boqueirão': [-24.0030, -46.4080],
-
-  // Guarujá - coordenadas ajustadas
-  'Guarujá-Enseada': [-23.9920, -46.2570],
-  'Guarujá-Astúrias': [-23.9860, -46.2500]
-};
+const municipios = Object.keys(bairrosPorMunicipio);
 
 export default function NovaOcorrencia() {
   const { usuario, logout } = useAuth();
@@ -81,6 +49,14 @@ export default function NovaOcorrencia() {
   const [isLoading, setIsLoading] = useState(false);
   const [mapKey, setMapKey] = useState(0);
   const mapRef = useRef(null);
+  const [municipiosGeojson, setMunicipiosGeojson] = useState(null);
+  const [bairrosGeojson, setBairrosGeojson] = useState(null);
+
+
+  // **Estados para barra de busca**
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,7 +79,6 @@ export default function NovaOcorrencia() {
     navigate('/');
   };
 
-  // Função para redimensionar o mapa
   const resizeMap = () => {
     if (mapRef.current) {
       setTimeout(() => {
@@ -113,114 +88,315 @@ export default function NovaOcorrencia() {
   };
 
   useEffect(() => {
-    // Força o redimensionamento do mapa após o componente montar
     const timer = setTimeout(() => {
       if (mapRef.current) {
         resizeMap();
       }
     }, 500);
-
     return () => clearTimeout(timer);
   }, []);
 
-  // useEffect para mudança de município - LIMPA O BAIRRO
+useEffect(() => {
+  if (form.municipio) {
+    setForm(f => {
+      const bairrosDoMunicipio = bairrosPorMunicipio[form.municipio] || [];
+      if (bairrosDoMunicipio.includes(f.bairro)) {
+        return f; // Bairro válido, mantém o estado
+      }
+      return { ...f, bairro: '' }; // Bairro inválido, limpa o bairro
+    });
+  }
+}, [form.municipio]);
+
+useEffect(() => {
+  if (!form.municipio || !mapRef.current || !bairrosGeojson) return;
+
+  // Normaliza nome para comparação segura
+  const municipioSelecionado = form.municipio.trim().toLowerCase();
+
+  // Filtra bairros do município (comparação case-insensitive)
+  const bairrosDoMunicipio = bairrosGeojson.features.filter(
+    (f) => f.properties.NM_MUN.trim().toLowerCase() === municipioSelecionado
+  );
+
+  if (form.bairro) {
+    // Bairro selecionado: zoom no bairro e atualiza coordenadas
+    const bairroFeature = bairrosDoMunicipio.find(
+      (f) => f.properties.NM_BAIRRO.trim().toLowerCase() === form.bairro.trim().toLowerCase()
+    );
+
+    if (bairroFeature) {
+      const bounds = L.geoJSON(bairroFeature).getBounds();
+      mapRef.current.fitBounds(bounds);
+
+      const centroid = turf.centroid(bairroFeature);
+      const [lon, lat] = centroid.geometry.coordinates;
+
+      setForm(f => ({
+        ...f,
+        coordenadas: {
+          lat: lat.toFixed(6),
+          lon: lon.toFixed(6),
+        },
+      }));
+    }
+  } else {
+    // Nenhum bairro selecionado: zoom no município todo e atualiza coordenadas do centróide do município
+if (bairrosDoMunicipio.length > 0) {
+  let centroidMunicipio;
+
+if (bairrosDoMunicipio.length > 1) {
+  // ===== CORREÇÃO: Cria uma FeatureCollection com os bairros
+  const featureCollection = turf.featureCollection(bairrosDoMunicipio);
+  const combined = turf.combine(featureCollection);
+
+  if (combined && combined.features.length > 0) {
+    centroidMunicipio = turf.centroid(combined.features[0]); // pega primeiro MultiPolygon
+  }
+} else {
+  // Apenas um bairro, calcula centróide direto
+  centroidMunicipio = turf.centroid(bairrosDoMunicipio[0]);
+}
+
+  if (centroidMunicipio) {
+    const [lon, lat] = centroidMunicipio.geometry.coordinates;
+
+    setForm(f => ({
+      ...f,
+      coordenadas: {
+        lat: lat.toFixed(6),
+        lon: lon.toFixed(6),
+      },
+    }));
+  } else {
+    // fallback para centro dos bounds se cálculo do centróide falhar
+    const group = L.geoJSON(bairrosDoMunicipio);
+    const bounds = group.getBounds();
+    const center = bounds.getCenter();
+
+    setForm(f => ({
+      ...f,
+      coordenadas: {
+        lat: center.lat.toFixed(6),
+        lon: center.lng.toFixed(6),
+      },
+    }));
+  }
+
+  // Ajusta o zoom do mapa para os bairros do município
+      const group = L.geoJSON(bairrosDoMunicipio);
+      mapRef.current.fitBounds(group.getBounds());
+    }
+  }
+}, [form.municipio, form.bairro, bairrosGeojson]);
+
   useEffect(() => {
-    if (form.municipio) {
-      // Limpa o bairro quando o município muda para evitar inconsistências
-      setForm(f => ({ ...f, bairro: '' }));
+  const loadGeojsons = async () => {
+    try {
+      const [munRes, baiRes] = await Promise.all([
+        fetch('/MUNICIPIOS_SP.geojson'),
+        fetch('/BAIRROS_COM_MUNICIPIOS.geojson')
+      ]);
+      const municipiosData = await munRes.json();
+      const bairrosData = await baiRes.json();
+      setMunicipiosGeojson(municipiosData);
+      setBairrosGeojson(bairrosData);
+    } catch (error) {
+      console.error('Erro ao carregar GeoJSONs:', error);
+    }
+  };
+  loadGeojsons();
+}, []);
 
-      // Move o mapa para o município
-      if (coordenadasPorMunicipio[form.municipio] && mapRef.current) {
-        const [lat, lon] = coordenadasPorMunicipio[form.municipio];
-        console.log('Movendo mapa para município:', form.municipio, lat, lon);
 
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.setView([lat, lon], 14);
-          }
-        }, 100);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const { tipo, data, municipio, bairro, descricao, coordenadas } = form;
+  if (!tipo || !data || !municipio || !bairro || !descricao || !coordenadas.lat || !coordenadas.lon) {
+    toast.warn('Preencha todos os campos obrigatórios.');
+    return;
+  }
+  setIsLoading(true);
+  
+  const token = localStorage.getItem('token');
+  console.log('Token do localStorage:', token);
+  
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    console.log('Headers que serão enviados:', config.headers);
+    
+    await api.post('/ocorrencias', {
+      ...form,
+      usuarioId: usuario?.id,
+    }, config);
+
+    toast.success('Ocorrência registrada com sucesso!');
+    setForm({
+      tipo: '',
+      data: '',
+      municipio: '',
+      bairro: '',
+      descricao: '',
+      coordenadas: { lat: '', lon: '' }
+    });
+    setTimeout(() => {
+      navigate('/');
+    }, 2000);
+  } catch (err) {
+    console.error(err);
+    // Tratamento do token expirado/inválido
+    if (err.response) {
+      const msg = err.response.data.error || err.response.data.detail || '';
+      if (msg.toLowerCase().includes('token expirado')) {
+        toast.error('Seu login expirou. Faça login novamente.');
+        localStorage.removeItem('token');
+        navigate('/login');
+        return;
+      }
+      if (msg.toLowerCase().includes('token inválido')) {
+        toast.error('Token inválido. Faça login novamente.');
+        localStorage.removeItem('token');
+        navigate('/login');
+        return;
+      }
+      // Outros erros do servidor
+      toast.error(`Erro: ${msg}`);
+    } else {
+      toast.error('Erro de conexão. Tente novamente mais tarde.');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
+
+
+function ClickHandler() {
+  useMapEvents({
+    click(e) {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+
+      // Atualiza coordenadas no formulário
+      setForm((f) => ({
+        ...f,
+        coordenadas: {
+          lat: lat.toFixed(6),
+          lon: lon.toFixed(6),
+        }
+      }));
+
+      // Se os bairros forem carregados
+      if (bairrosGeojson) {
+        const point = turf.point([lon, lat]);
+        const bairroFeature = bairrosGeojson.features.find(feature =>
+          turf.booleanPointInPolygon(point, feature)
+        );
+
+        if (bairroFeature) {
+          const nomeBairro = bairroFeature.properties.NM_BAIRRO;
+          const nomeMunicipio = bairroFeature.properties.NM_MUN;
+
+          console.log('Bairro encontrado no clique:', nomeBairro);
+          console.log('Município correspondente:', nomeMunicipio);
+
+          setForm(f => ({
+            ...f,
+            bairro: nomeBairro,
+            municipio: nomeMunicipio
+          }));
+        } else {
+          console.log('Nenhum bairro encontrado para esse ponto.');
+        }
       }
     }
-  }, [form.municipio]);
+  });
 
-  // useEffect CORRIGIDO para mudança de bairro
-  useEffect(() => {
-    if (form.bairro && form.municipio && mapRef.current) {
-      const chave = `${form.municipio}-${form.bairro}`;
-      console.log('🔍 Buscando coordenadas para:', chave);
+  return null;
+}
 
-      if (coordenadasPorBairro[chave]) {
-        const [lat, lon] = coordenadasPorBairro[chave];
-        console.log('✅ Coordenadas encontradas:', lat, lon);
 
-        // Delay maior para garantir que o mapa esteja pronto
-        setTimeout(() => {
-          if (mapRef.current) {
-            mapRef.current.setView([lat, lon], 16); // Zoom específico para bairro
-            console.log('🗺️ Mapa movido para:', lat, lon, 'Zoom: 16');
-          }
-        }, 300); // Aumentei para 300ms
-      } else {
-        console.error('❌ Coordenadas não encontradas para:', chave);
-        console.log('Coordenadas disponíveis:', Object.keys(coordenadasPorBairro));
-      }
-    }
-  }, [form.bairro, form.municipio]); // Dependências corretas
+  // Função para buscar endereço usando Nominatim
+  const handleSearchChange = async (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { tipo, data, municipio, bairro, descricao, coordenadas } = form;
-
-    if (!tipo || !data || !municipio || !bairro || !descricao || !coordenadas.lat || !coordenadas.lon) {
-      toast.warn('Preencha todos os campos obrigatórios.');
+    if (value.length < 3) {
+      setSearchResults([]);
       return;
     }
 
-    setIsLoading(true);
+    setIsSearching(true);
     try {
-      await api.post('/ocorrencias', {
-        ...form,
-        usuarioId: usuario?.id
-      });
-      toast.success('Ocorrência registrada com sucesso!');
-      setForm({
-        tipo: '',
-        data: '',
-        municipio: '',
-        bairro: '',
-        descricao: '',
-        coordenadas: { lat: '', lon: '' }
-      });
-
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-
-    } catch (err) {
-      console.error(err);
-      toast.error(err.message || 'Erro ao salvar ocorrência.');
+   const res = await fetch(
+  `/api/nominatim?q=${encodeURIComponent(value)}`
+);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error(error);
+      setSearchResults([]);
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
     }
   };
 
-  function ClickHandler() {
-    useMapEvents({
-      click(e) {
-        setForm((f) => ({
-          ...f,
-          coordenadas: {
-            lat: e.latlng.lat.toFixed(6),
-            lon: e.latlng.lng.toFixed(6)
-          }
-        }));
+  // Quando usuário seleciona endereço da lista
+  const handleSelectSearchResult = (place) => {
+    setSearchQuery(place.display_name);
+    setSearchResults([]);
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+
+    setForm((f) => ({
+      ...f,
+      coordenadas: { lat: lat.toFixed(6), lon: lon.toFixed(6) }
+    }));
+
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lon], 12);
+    }
+  };
+
+const bairros = React.useMemo(() => {
+  if (!form.municipio || !bairrosGeojson) return [];
+
+  const bairrosSet = new Set(
+    bairrosGeojson.features
+      .filter(feature => feature.properties.NM_MUN === form.municipio)
+      .map(feature => feature.properties.NM_BAIRRO.trim()) // remove espaços extras
+  );
+
+  return Array.from(bairrosSet).sort((a, b) => a.localeCompare(b));
+}, [form.municipio, bairrosGeojson]);
+
+  // --------- Função para testar token ---------
+const testarToken = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    toast.error('Nenhum token encontrado.');
+    return;
+  }
+  try {
+    const response = await api.get('/test-token', {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
-    return null;
+    toast.success('Token válido! 🎉');
+    console.log('Resposta do teste de token:', response.data);
+  } catch (error) {
+    console.error('Erro ao testar token:', error);
+    toast.error('Token inválido ou expirado.');
   }
-
-  const bairros = form.municipio ? bairrosPorMunicipio[form.municipio] || [] : [];
-
+};
+// --------- Fim da função testarToken ---------
   return (
     <div className="nova-ocorrencia-container">
       <div className="nova-ocorrencia-content">
@@ -380,6 +556,49 @@ export default function NovaOcorrencia() {
             <h3>Localização da Ocorrência</h3>
             <p>Clique no mapa para selecionar o local</p>
           </div>
+
+          {/* Barra de busca */}
+          <div style={{ position: 'relative', marginBottom: '10px' }}>
+            <input
+              type="text"
+              placeholder="Buscar endereço..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              style={{ width: '100%', padding: '8px', fontSize: '16px' }}
+            />
+            {isSearching && (
+              <div style={{ position: 'absolute', right: 10, top: 10 }}>Carregando...</div>
+            )}
+            {searchResults.length > 0 && (
+              <ul
+                style={{
+                  position: 'absolute',
+                  zIndex: 1000,
+                  backgroundColor: 'white',
+                  listStyle: 'none',
+                  margin: 0,
+                  padding: '5px',
+                  width: '100%',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                {searchResults.map((place) => (
+                  <li
+                    key={place.place_id}
+                    onClick={() => handleSelectSearchResult(place)}
+                    style={{ padding: '5px' }}
+                  >
+                    {place.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="nova-ocorrencia-map-container">
             <MapContainer
               key={mapKey}
@@ -416,25 +635,48 @@ export default function NovaOcorrencia() {
         </div>
       </div>
 
+      <AppBar position="fixed" color="primary" className="app-bar">
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="Voltar"
+            onClick={handleVoltar}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, fontWeight: 'bold', fontFamily: 'monospace' }}
+          >
+            Nova Ocorrência
+          </Typography>
+          <Button
+            startIcon={<PersonIcon />}
+            color="inherit"
+            sx={{ pointerEvents: 'none', cursor: 'default', textTransform: 'none' }}
+          >
+            {usuario?.nome || 'Usuário'}
+          </Button>
+          <IconButton color="inherit" onClick={handleLogout}>
+            <LogoutIcon />
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
       <ToastContainer
-        position="top-right"
+        position="top-center"
         autoClose={4000}
         hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick={true}
+        newestOnTop={false}
+        closeOnClick
         rtl={false}
-        pauseOnFocusLoss={false}
-        draggable={true}
-        pauseOnHover={true}
-        theme="colored"
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
         transition={Bounce}
-        toastClassName="custom-toast"
-        bodyClassName="custom-toast-body"
-        progressClassName="custom-toast-progress"
-        style={{
-          fontSize: '14px',
-          fontWeight: '500'
-        }}
       />
     </div>
   );

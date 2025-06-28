@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Accordion,
@@ -24,7 +25,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 import LControlGeocoder from 'leaflet-control-geocoder';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import SearchBar from '../../components/SearchBar';
 import { getColorByIndice } from '../../utils/colors';
 import { calcularDensidade } from '../../utils/densidade';
@@ -75,6 +75,46 @@ export default function Home() {
   const [bairrosData, setBairrosData] = useState(null);
   const [ocorrencias, setOcorrencias] = useState([]);
   const [zoomLevel, setZoomLevel] = useState(11);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearchChange = async (e) => {
+  const query = e.target.value;
+  setSearchQuery(query);
+  if (!query) {
+    setSearchResults([]);
+    return;
+  }
+
+  setIsSearching(true);
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+    );
+    const data = await res.json();
+    setSearchResults(data);
+  } catch (error) {
+    console.error('Erro na busca:', error);
+  }
+  setIsSearching(false);
+};
+
+
+  const handleSelectSearchResult = (place) => {
+  setSearchQuery(place.display_name);
+  setSearchResults([]);
+  const lat = parseFloat(place.lat);
+  const lon = parseFloat(place.lon);
+
+  if (mapRef.current) {
+    mapRef.current.setView([lat, lon], 16);
+    L.marker([lat, lon], { icon: redIcon }).addTo(mapRef.current)
+      .bindPopup(`<b>${place.display_name}</b>`)
+      .openPopup();
+  }
+};
+
 
   const [filtros, setFiltros] = useState({
     roubos: true,
@@ -142,22 +182,28 @@ export default function Home() {
     }
   }, [showMunicipios]);
 
-  useEffect(() => {
-    fetch('/BAIRROS_BS.geojson')
+useEffect(() => {
+  if (showBairros) {
+    fetch('/BAIRROS_COM_MUNICIPIOS.geojson')
       .then((r) => r.json())
       .then(setBairrosData)
-      .catch((err) => console.error('Erro bairros', err));
-  }, []);
+      .catch((err) => console.error('Erro ao carregar bairros:', err));
+  } else {
+    setBairrosData(null);
+  }
+}, [showBairros]);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    fetch('http://localhost:4000/api/ocorrencias', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then(setOcorrencias)
-      .catch((err) => console.error('Erro ocorrências:', err));
-  }, []);
+const location = useLocation(); // logo antes do useEffect
+
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  fetch('http://localhost:4000/api/ocorrencias', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((r) => r.json())
+    .then(setOcorrencias)
+    .catch((err) => console.error('Erro ocorrências:', err));
+}, [location]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -176,9 +222,9 @@ export default function Home() {
     return () => legend.remove();
   }, [densidadePorBairro]);
 
-  const styleBairros = (feature) => {
-    const bairro = feature.properties.nome;
-    const municipio = feature.properties.municipio;
+const styleBairros = (feature) => {
+  const bairro = feature.properties.NM_BAIRRO;
+  const municipio = feature.properties.NM_MUN;
     const chave = `${municipio}::${bairro}`;
     const indice = densidadePorBairro[chave] || 0;
 
@@ -191,6 +237,20 @@ export default function Home() {
       fillOpacity: 0.7,
     };
   };
+
+const onEachMunicipio = (feature, layer) => {
+  const nomeMunicipio = feature.properties.NM_MUN || 'Município desconhecido';
+  layer.bindPopup(`<strong>Município:</strong> ${nomeMunicipio}`);
+};
+
+const onEachBairro = (feature, layer) => {
+  const nomeBairro = feature.properties.NM_BAIRRO || 'Bairro desconhecido';
+  const nomeMunicipio = feature.properties.NM_MUN || 'Município desconhecido';
+
+  layer.bindPopup(
+    `<strong>Bairro:</strong> ${nomeBairro}<br /><strong>Município:</strong> ${nomeMunicipio}`
+  );
+};
 
   const getCircleRadius = (zoom) => {
     const baseRadius = 8;
@@ -304,7 +364,50 @@ export default function Home() {
           </Box>
         </Box>
 
-        <Box className="map-container" sx={{ flexGrow: 1, height: '100%' }}>
+  <Box className="map-container" sx={{ flexGrow: 1, height: '100%' }}>
+
+          {/* CAMPO DE BUSCA DE ENDEREÇO E RESULTADOS */}
+          <div style={{ position: 'relative', marginBottom: '10px', padding: '0 16px', width: '100%' }}>
+            <input
+              type="text"
+              placeholder="Buscar endereço..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              style={{ width: '100%', padding: '8px', fontSize: '16px' }}
+            />
+            {isSearching && (
+              <div style={{ position: 'absolute', right: 10, top: 10 }}>Carregando...</div>
+            )}
+            {searchResults.length > 0 && (
+              <ul
+                style={{
+                  position: 'absolute',
+                  zIndex: 1000,
+                  backgroundColor: 'white',
+                  listStyle: 'none',
+                  margin: 0,
+                  padding: '5px',
+                  width: '100%',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                {searchResults.map((place) => (
+                  <li
+                    key={place.place_id}
+                    onClick={() => handleSelectSearchResult(place)}
+                    style={{ padding: '5px' }}
+                  >
+                    {place.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <MapContainer
             center={[-23.9608, -46.3336]}
             zoom={11}
@@ -318,22 +421,27 @@ export default function Home() {
             />
             <ZoomController setZoomLevel={setZoomLevel} />
             <GeocoderControl />
+{showMunicipios && municipiosData && (
+  <GeoJSON
+    data={municipiosData}
+    style={{
+      fillColor: '#3388ff',
+      weight: 2,
+      color: 'white',
+      fillOpacity: 0.3
+    }}
+    onEachFeature={onEachMunicipio} // 👈 ADICIONADO AQUI
+  />
+)}
 
-            {showMunicipios && municipiosData && (
-              <GeoJSON
-                data={municipiosData}
-                style={{
-                  fillColor: '#3388ff',
-                  weight: 2,
-                  color: 'white',
-                  fillOpacity: 0.3
-                }}
-              />
-            )}
 
-            {showBairros && bairrosData && (
-              <GeoJSON data={bairrosData} style={styleBairros} />
-            )}
+{showBairros && bairrosData && (
+  <GeoJSON
+    data={bairrosData}
+    style={styleBairros}
+    onEachFeature={onEachBairro}
+  />
+)}
 
             {ocorrenciasFiltradas
               .filter((o) => o.coordenadas?.lat && o.coordenadas?.lon)

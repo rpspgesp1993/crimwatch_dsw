@@ -1,4 +1,3 @@
-// backend/middlewares/adminMiddleware.js
 const jwt = require('jsonwebtoken');
 
 const adminMiddleware = (req, res, next) => {
@@ -18,7 +17,10 @@ const adminMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Token inválido' });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expirado' });
+    }
+    return res.status(401).json({ error: 'Token inválido' });
   }
 };
 

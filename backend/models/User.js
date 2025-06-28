@@ -5,7 +5,8 @@ const UserSchema = new mongoose.Schema({
   nome: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'user'], default: 'user' }
+  role: { type: String, enum: ['admin', 'user'], default: 'user' },
+  refreshToken: { type: String }  // campo para armazenar o refresh token
 });
 
 UserSchema.pre('save', async function (next) {
