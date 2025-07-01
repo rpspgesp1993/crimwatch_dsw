@@ -322,30 +322,30 @@ function ClickHandler() {
 }
 
 
-  // Função para buscar endereço usando Nominatim
-  const handleSearchChange = async (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
+const handleSearchChange = async (e) => {
+  const value = e.target.value;
+  setSearchQuery(value);
 
-    if (value.length < 3) {
-      setSearchResults([]);
-      return;
-    }
+  if (value.length < 3) {
+    setSearchResults([]);
+    return;
+  }
 
-    setIsSearching(true);
-    try {
-   const res = await fetch(
-  `/api/nominatim?q=${encodeURIComponent(value)}`
-);
-      const data = await res.json();
-      setSearchResults(data);
-    } catch (error) {
-      console.error(error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  setIsSearching(true);
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&addressdetails=1`
+    );
+    if (!res.ok) throw new Error('Erro na busca');
+    const data = await res.json();
+    setSearchResults(data);
+  } catch (error) {
+    console.error(error);
+    setSearchResults([]);
+  } finally {
+    setIsSearching(false);
+  }
+};
 
   // Quando usuário seleciona endereço da lista
   const handleSelectSearchResult = (place) => {

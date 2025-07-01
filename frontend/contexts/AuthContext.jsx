@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true); // 👈 controle de carregamento
 
   useEffect(() => {
     const tokenSalvo = localStorage.getItem('token');
@@ -18,10 +19,12 @@ export const AuthProvider = ({ children }) => {
       setUsuario(JSON.parse(usuarioSalvo));
       api.defaults.headers.common['Authorization'] = `Bearer ${tokenSalvo}`;
     }
+
+    setLoading(false); // 👈 finaliza o loading
   }, []);
 
   const login = async (email, senha) => {
-    console.log('🔎 Enviando para o backend:', { email, senha });  // ✅ Aqui está o console.log que você precisa
+    console.log('🔎 Enviando para o backend:', { email, senha });
 
     try {
       const res = await api.post('/auth/login', { email, senha });
@@ -59,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, token, login, cadastrar, logout }}>
+    <AuthContext.Provider value={{ usuario, token, loading, login, cadastrar, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -64,6 +64,19 @@ const redIcon = new L.Icon({
   popupAnchor: [1, -34],
 });
 
+const blueIcon = new L.Icon({
+  iconUrl:
+    'data:image/svg+xml;base64,' +
+    btoa(`
+    <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#3b82f6" stroke="#1e40af" stroke-width="1" d="M12.5,0 C19.4,0 25,5.6 25,12.5 C25,19.4 12.5,41 12.5,41 C12.5,41 0,19.4 0,12.5 C0,5.6 5.6,0 12.5,0 Z"/>
+      <circle fill="#ffffff" cx="12.5" cy="12.5" r="4"/>
+    </svg>`),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
 export default function Home() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -119,7 +132,6 @@ export default function Home() {
   const [filtros, setFiltros] = useState({
     roubos: true,
     furtos: true,
-    policialMorto: true,
   });
 
   const handleFiltroChange = (tipo) => {
@@ -258,44 +270,51 @@ const onEachBairro = (feature, layer) => {
     return Math.min(35, baseRadius + zoomFactor * 6);
   };
 
-  const renderOcorrencia = (oc) => {
-    const popupContent = (
-      <div>
-        <strong>{oc.tipo}</strong><br />
-        {oc.bairro}, {oc.municipio}<br />
-        {new Date(oc.data).toLocaleDateString()}<br />
-        {oc.descricao}<br /><br />
-      </div>
-    );
+const renderOcorrencia = (oc) => {
+  const tipo = oc.tipo.toLowerCase();
+  const isRoubo = tipo.includes('roubo');
+  const isFurto = tipo.includes('furto');
 
-    if (zoomLevel >= ZOOM_THRESHOLD) {
-      return (
-        <CircleMarker
-          key={oc._id}
-          center={[oc.coordenadas.lat, oc.coordenadas.lon]}
-          radius={getCircleRadius(zoomLevel)}
-          pathOptions={{
-            color: '#dc2626',
-            fillColor: '#dc2626',
-            fillOpacity: 0.6,
-            weight: 1,
-          }}
-        >
-          <Popup>{popupContent}</Popup>
-        </CircleMarker>
-      );
-    }
+  const color = isRoubo ? '#dc2626' : isFurto ? '#3b82f6' : '#6b7280'; // fallback: cinza
+  const icon = isRoubo ? redIcon : isFurto ? blueIcon : redIcon;
 
+  const popupContent = (
+    <div>
+      <strong>{oc.tipo}</strong><br />
+      {oc.bairro}, {oc.municipio}<br />
+      {new Date(oc.data).toLocaleDateString()}<br />
+      {oc.descricao}<br /><br />
+    </div>
+  );
+
+  if (zoomLevel >= ZOOM_THRESHOLD) {
     return (
-      <Marker
+      <CircleMarker
         key={oc._id}
-        position={[oc.coordenadas.lat, oc.coordenadas.lon]}
-        icon={redIcon}
+        center={[oc.coordenadas.lat, oc.coordenadas.lon]}
+        radius={getCircleRadius(zoomLevel)}
+        pathOptions={{
+          color,
+          fillColor: color,
+          fillOpacity: 0.6,
+          weight: 1,
+        }}
       >
         <Popup>{popupContent}</Popup>
-      </Marker>
+      </CircleMarker>
     );
-  };
+  }
+
+  return (
+    <Marker
+      key={oc._id}
+      position={[oc.coordenadas.lat, oc.coordenadas.lon]}
+      icon={icon}
+    >
+      <Popup>{popupContent}</Popup>
+    </Marker>
+  );
+};
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -335,7 +354,6 @@ const onEachBairro = (feature, layer) => {
               {[
                 { label: 'Roubos', key: 'roubos' },
                 { label: 'Furtos', key: 'furtos' },
-                { label: 'Policial Morto em Serviço', key: 'policialMorto' }
               ].map((item) => (
                 <FormControlLabel
                   key={item.key}

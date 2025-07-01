@@ -8,11 +8,12 @@ import RegisterPage from './pages/RegisterPage/RegisterPage';
 import NovaOcorrencia from './pages/NovaOcorrencia/NovaOcorrencia';
 import Ranking from './pages/Ranking/Ranking';
 import PainelAdmin from './pages/PainelAdmin';
+import UsuariosAdmin from './pages/UsuariosAdmin'; // <-- Importar sua nova página
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './contexts/ProtectedRoute';
 
 function AppRoutes() {
-  const { token } = useAuth(); // ✅ substitui isAuthenticated()
+  const { token } = useAuth();
 
   return (
     <Routes>
@@ -26,7 +27,7 @@ function AppRoutes() {
         element={!token ? <RegisterPage /> : <Navigate to="/home" />}
       />
 
-      {/* Rotas protegidas (com layout) */}
+      {/* Rotas protegidas (exigem autenticação) */}
       <Route
         path="/"
         element={
@@ -35,15 +36,19 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        {/* Rota padrão redireciona para home */}
         <Route index element={<Navigate to="/home" />} />
         <Route path="home" element={<Home />} />
         <Route path="nova-ocorrencia" element={<NovaOcorrencia />} />
         <Route path="ranking" element={<Ranking />} />
         <Route path="painel-admin" element={<PainelAdmin />} />
+        <Route path="admin/usuarios" element={<UsuariosAdmin />} /> {/* Nova rota */}
+
+        {/* Qualquer outra rota dentro da área protegida redireciona para home */}
         <Route path="*" element={<Navigate to="/home" />} />
       </Route>
 
-      {/* Fallback: qualquer rota inválida vai pro login */}
+      {/* Qualquer rota inválida fora da área protegida redireciona para login */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
