@@ -87,7 +87,7 @@ const Ranking = ({ ocorrencias = [] }) => {
       if (dataInicial) params.dataInicial = dataInicial;
       if (dataFinal) params.dataFinal = dataFinal;
 
-      const response = await api.get("/ocorrencias", { params });
+      const response = await api.get(`${process.env.REACT_APP_API_URL}/ocorrencias`, { params });
       setOcorrenciasAPI(response.data);
     } catch (err) {
       console.error("Erro ao buscar ranking", err);
