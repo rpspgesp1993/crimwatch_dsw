@@ -31,7 +31,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
 });
 
-const tiposDeCrime = ['Roubos', 'Furtos', 'Policial morto em serviço'];
+const tiposDeCrime = ['Roubos', 'Furtos', 'Homicídios', 'Vandalismo', 'Outros'];
 const municipios = Object.keys(bairrosPorMunicipio);
 
 export default function NovaOcorrencia() {
@@ -273,10 +273,6 @@ const handleSubmit = async (e) => {
   }
 };
 
-
-
-
-
 function ClickHandler() {
   useMapEvents({
     click(e) {
@@ -320,7 +316,6 @@ function ClickHandler() {
 
   return null;
 }
-
 
 const handleSearchChange = async (e) => {
   const value = e.target.value;
@@ -558,7 +553,7 @@ const testarToken = async () => {
           </div>
 
           {/* Barra de busca */}
-          <div style={{ position: 'relative', marginBottom: '10px' }}>
+          {/* <div style={{ position: 'relative', marginBottom: '10px' }}>
             <input
               type="text"
               placeholder="Buscar endereço..."
@@ -597,8 +592,7 @@ const testarToken = async () => {
                 ))}
               </ul>
             )}
-          </div>
-
+          </div> */}
           <div className="nova-ocorrencia-map-container">
             <MapContainer
               key={mapKey}

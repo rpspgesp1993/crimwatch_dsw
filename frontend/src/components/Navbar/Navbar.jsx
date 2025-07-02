@@ -7,17 +7,29 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const Navbar = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [adminMenuAnchor, setAdminMenuAnchor] = React.useState(null);
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
 
   const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
+  const handleAdminMenuClick = (event) => setAdminMenuAnchor(event.currentTarget);
+  const handleAdminMenuClose = () => setAdminMenuAnchor(null);
+
   const handleLogout = () => {
-    logout(); // chama o método do contexto
+    logout();
     handleClose();
     navigate('/login');
   };
+
+  const handleAdminNavigation = (path) => {
+    navigate(path);
+    handleAdminMenuClose();
+  };
+
+  // Verificação para admin
+  const isAdmin = usuario && usuario.role === 'admin';
 
   return (
     <AppBar position="static">
@@ -36,10 +48,35 @@ const Navbar = () => {
           <NavLink to="/ranking" style={{ color: 'white', textDecoration: 'none' }}>
             Ranking de Crimes
           </NavLink>
-          {usuario && usuario.tipo === 'admin' && (
-            <NavLink to="/painel-admin" style={{ color: 'white', textDecoration: 'none' }}>
-              Painel Admin
-            </NavLink>
+          
+          {/* Menu Admin */}
+          {isAdmin && (
+            <div>
+              <Button
+                onClick={handleAdminMenuClick}
+                style={{ 
+                  color: 'white', 
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                Admin ▼
+              </Button>
+              <Menu 
+                anchorEl={adminMenuAnchor} 
+                open={Boolean(adminMenuAnchor)} 
+                onClose={handleAdminMenuClose}
+              >
+                <MenuItem onClick={() => handleAdminNavigation('/painel-admin')}>
+                  Painel Admin
+                </MenuItem>
+                <MenuItem onClick={() => handleAdminNavigation('/admin-usuarios')}>
+                  Gerenciar Usuários
+                </MenuItem>
+              </Menu>
+            </div>
           )}
 
           <div>

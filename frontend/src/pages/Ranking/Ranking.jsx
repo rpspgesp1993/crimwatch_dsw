@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import api from "../../services/api";
 import "./Ranking.css";
 
@@ -47,6 +47,28 @@ const Ranking = ({ ocorrencias = [] }) => {
   const [dataFinal, setDataFinal] = useState("");
   const [ocorrenciasAPI, setOcorrenciasAPI] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Cleanup para resolver problemas de navegação
+  useEffect(() => {
+    // Limpa qualquer timer ou referência pendente do Leaflet
+    return () => {
+      // Força a limpeza de qualquer mapa global que possa estar interferindo
+      if (window.L && window.L._getMap) {
+        try {
+          const maps = window.L._getMap();
+          if (maps) {
+            Object.values(maps).forEach(map => {
+              if (map && map.remove) {
+                map.remove();
+              }
+            });
+          }
+        } catch (e) {
+          // Ignora erros de limpeza
+        }
+      }
+    };
+  }, []);
 
   const tiposDeCrime = useMemo(() => {
     const tipos = new Set();

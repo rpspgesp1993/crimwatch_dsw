@@ -1,20 +1,19 @@
-// src/utils/densidade.js
-export function calcularDensidade(ocorrencias, populacao) {
-  const contagem = {};
+const normalize = (str) =>
+  str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : '';
 
-  ocorrencias.forEach(o => {
-    const chave = `${o.municipio}::${o.bairro}`;
-    contagem[chave] = (contagem[chave] || 0) + 1;
+export const calcularDensidade = (ocorrencias, populacao) => {
+  const densidadePorBairro = {};
+
+  ocorrencias.forEach((ocorrencia) => {
+    const municipio = normalize(ocorrencia.municipio);
+    const bairro = normalize(ocorrencia.bairro);
+    const chave = `${municipio}::${bairro}`;
+
+    if (!densidadePorBairro[chave]) {
+      densidadePorBairro[chave] = 0;
+    }
+    densidadePorBairro[chave]++;
   });
 
-  const densidade = {};
-  for (const chave in contagem) {
-    const [municipio, bairro] = chave.split('::');
-    const habitantes = populacao[municipio]?.[bairro];
-    if (habitantes && habitantes > 0) {
-      densidade[chave] = (contagem[chave] / habitantes) * 100000;
-    }
-  }
-
-  return densidade;
-}
+  return densidadePorBairro;
+};
