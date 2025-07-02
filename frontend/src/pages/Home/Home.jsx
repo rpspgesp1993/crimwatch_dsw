@@ -207,7 +207,7 @@ export default function Home() {
     if (!window.confirm('Deseja remover esta ocorrência?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:4000/api/ocorrencias/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/ocorrencias/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -284,7 +284,7 @@ export default function Home() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch('http://localhost:4000/api/ocorrencias', {
+    fetch(`${process.env.REACT_APP_API_URL}/ocorrencias`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
