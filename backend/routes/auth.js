@@ -35,14 +35,14 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: usuario._id, nome: usuario.nome, role: usuario.role },
-      process.env.JWT_SECRET,            // ✅ Removemos o fallback
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.json({
       token,
       usuario: {
-        id: usuario._id,
+        _id: usuario._id,  // ✅ MUDANÇA: de 'id' para '_id'
         nome: usuario.nome,
         email: usuario.email,
         role: usuario.role
@@ -63,7 +63,7 @@ router.get('/verify', (req, res) => {
 
   const token = authHeader.split(' ')[1];
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {   // ✅ Corrigido aqui também
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(401).json({ isValid: false, message: 'Token inválido ou expirado' });
     }
